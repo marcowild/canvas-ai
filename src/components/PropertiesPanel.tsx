@@ -1,5 +1,4 @@
 import { memo, useMemo } from 'react'
-import { useReactFlow } from 'reactflow'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { BaseNodeData, NodeParameter } from '../types/workflow'
 
@@ -23,9 +22,6 @@ export const PropertiesPanel = memo(() => {
     // Handle text-to-image nodes
     if (node.type === 'textToImage') {
       const isGemini = modelParam?.value === 'gemini-2.5-flash'
-
-      console.log('Model value:', modelParam?.value, 'isGemini:', isGemini)
-      console.log('All parameters:', nodeData.parameters.map(p => p.id))
 
       return nodeData.parameters.filter(param => {
         // Always show model parameter

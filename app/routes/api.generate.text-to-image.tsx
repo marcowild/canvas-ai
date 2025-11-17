@@ -82,7 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ success: true, imageUrl });
   } catch (error: any) {
-    console.error("Text-to-image error:", error);
+    console.error("Text-to-image error:", error.body);
     return Response.json(
       { error: error.message || "Image generation failed" },
       { status: 500 }

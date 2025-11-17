@@ -19,7 +19,7 @@ function WorkflowCanvasInner({ children }: WorkflowCanvasProps) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeId } = useWorkflowStore()
 
   const onInit = useCallback(() => {
-    console.log('React Flow initialized')
+    console.log('Flow canvas initialized')
   }, [])
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
@@ -33,7 +33,7 @@ function WorkflowCanvasInner({ children }: WorkflowCanvasProps) {
   // Validate connections (type checking)
   const isValidConnection = useCallback(
     (connection: Connection | Edge) => {
-      console.log('Validating connection:', connection)
+      // console.log('Validating connection:', connection)
 
       const sourceNode = nodes.find((n) => n.id === connection.source)
       const targetNode = nodes.find((n) => n.id === connection.target)
@@ -43,8 +43,8 @@ function WorkflowCanvasInner({ children }: WorkflowCanvasProps) {
         return false
       }
 
-      console.log('Source node:', sourceNode)
-      console.log('Target node:', targetNode)
+      // console.log('Source node:', sourceNode)
+      // console.log('Target node:', targetNode)
 
       // For now, allow all connections to test
       // TODO: Add type checking back

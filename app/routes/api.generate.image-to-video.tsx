@@ -39,8 +39,6 @@ export async function action({ request }: ActionFunctionArgs) {
       if (aspectRatio && aspectRatio !== "auto") {
         input.aspect_ratio = aspectRatio;
       }
-
-      console.log(input)
     } else {
       // For other models, convert duration string to number
       const durationNum = parseInt(duration);
