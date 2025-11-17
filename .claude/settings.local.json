@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.weavy.ai)",
+      "WebSearch",
+      "WebFetch(domain:help.weavy.ai)",
+      "WebFetch(domain:blog.fal.ai)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout 10 npm run dev:*)",
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
