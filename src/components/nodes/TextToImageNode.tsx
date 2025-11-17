@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { NodeProps, useReactFlow } from 'reactflow'
 import { BaseNode } from './BaseNode'
 import { BaseNodeData } from '../../types/workflow'
@@ -8,6 +8,7 @@ import { WorkflowExecutor } from '../../lib/workflow-executor'
 export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
   const { getNodes, getEdges } = useReactFlow()
   const { updateNodeData, nodes: storeNodes, edges: storeEdges } = useWorkflowStore()
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Check if all required inputs are connected and have data
   const canRun = useCallback(() => {
@@ -41,6 +42,9 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
   }, [props.id, props.data.inputs, storeNodes, storeEdges])
 
   const handleRun = useCallback(async () => {
+    // Create new AbortController for this execution
+    abortControllerRef.current = new AbortController()
+
     // Only execute this single node
     updateNodeData(props.id, { status: 'running', error: undefined })
 
@@ -84,13 +88,14 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
         payload.referenceImage = inputData.referenceImage
       }
 
-      // Call server-side API
+      // Call server-side API with abort signal
       const response = await fetch('/api/generate/text-to-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok) {
@@ -107,16 +112,32 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
         error: undefined
       })
     } catch (error: any) {
-      console.error('TextToImage error:', error)
-      updateNodeData(props.id, {
-        status: 'error',
-        error: error.message || 'Generation failed'
-      })
+      // Check if the error was due to abort
+      if (error.name === 'AbortError') {
+        updateNodeData(props.id, {
+          status: 'error',
+          error: 'Cancelled by user'
+        })
+      } else {
+        console.error('TextToImage error:', error)
+        updateNodeData(props.id, {
+          status: 'error',
+          error: error.message || 'Generation failed'
+        })
+      }
+    } finally {
+      abortControllerRef.current = null
     }
   }, [props.id, props.data.parameters, storeNodes, storeEdges, updateNodeData])
 
+  const handleCancel = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+  }, [])
+
   return (
-    <BaseNode {...props} onRun={handleRun} canRun={canRun()} />
+    <BaseNode {...props} onRun={handleRun} onCancel={handleCancel} canRun={canRun()} />
   )
 })
 

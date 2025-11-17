@@ -5,6 +5,7 @@ import { BaseNodeData } from '../../types/workflow'
 interface BaseNodeProps extends NodeProps<BaseNodeData> {
   children?: React.ReactNode
   onRun?: () => void
+  onCancel?: () => void
   canRun?: boolean
 }
 
@@ -22,7 +23,7 @@ const categoryColors = {
   output: 'border-green-500',
 }
 
-export const BaseNode = memo(({ data, selected, children, onRun, canRun }: BaseNodeProps) => {
+export const BaseNode = memo(({ data, selected, children, onRun, onCancel, canRun }: BaseNodeProps) => {
   const statusColor = statusColors[data.status || 'idle']
   const categoryColor = categoryColors[data.category]
   const isAINode = data.category === 'ai-generation'
@@ -39,18 +40,33 @@ export const BaseNode = memo(({ data, selected, children, onRun, canRun }: BaseN
           <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
           <h3 className="text-sm font-semibold text-white">{data.label}</h3>
         </div>
-        {isAINode && onRun && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onRun()
-            }}
-            disabled={!canRun || data.status === 'running'}
-            className="ml-2 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            title={!canRun ? 'Required inputs missing' : 'Run this node'}
-          >
-            {data.status === 'running' ? '...' : 'Run'}
-          </button>
+        {isAINode && (
+          <div className="flex items-center space-x-1">
+            {data.status === 'running' && onCancel ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCancel()
+                }}
+                className="ml-2 px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition"
+                title="Stop execution"
+              >
+                Stop
+              </button>
+            ) : onRun ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRun()
+                }}
+                disabled={!canRun || data.status === 'running'}
+                className="ml-2 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                title={!canRun ? 'Required inputs missing' : 'Run this node'}
+              >
+                Run
+              </button>
+            ) : null}
+          </div>
         )}
       </div>
 

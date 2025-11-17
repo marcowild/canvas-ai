@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { NodeProps, useReactFlow } from 'reactflow'
 import { BaseNode } from './BaseNode'
 import { BaseNodeData } from '../../types/workflow'
@@ -8,6 +8,7 @@ import { WorkflowExecutor } from '../../lib/workflow-executor'
 export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
   const { getNodes, getEdges } = useReactFlow()
   const { updateNodeData } = useWorkflowStore()
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const canRun = useCallback(() => {
     const nodes = getNodes()
@@ -37,6 +38,9 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
 
   const handleRun = useCallback(async () => {
     const { nodes: storeNodes, edges: storeEdges } = useWorkflowStore.getState()
+
+    // Create new AbortController for this execution
+    abortControllerRef.current = new AbortController()
 
     // Only execute this single node
     updateNodeData(props.id, { status: 'running', error: undefined })
@@ -74,6 +78,7 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
             duration,
             aspectRatio,
           }),
+          signal: abortControllerRef.current.signal,
         })
       } else if (inputData.image) {
         // Image-to-video only
@@ -86,6 +91,7 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
             duration,
             aspectRatio,
           }),
+          signal: abortControllerRef.current.signal,
         })
       } else if (inputData.prompt) {
         // Text-to-video
@@ -98,6 +104,7 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
             duration,
             aspectRatio,
           }),
+          signal: abortControllerRef.current.signal,
         })
       } else {
         throw new Error('Either image or prompt is required')
@@ -117,16 +124,32 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
         error: undefined
       })
     } catch (error: any) {
-      console.error('VideoGen error:', error)
-      updateNodeData(props.id, {
-        status: 'error',
-        error: error.message || 'Generation failed'
-      })
+      // Check if the error was due to abort
+      if (error.name === 'AbortError') {
+        updateNodeData(props.id, {
+          status: 'error',
+          error: 'Cancelled by user'
+        })
+      } else {
+        console.error('VideoGen error:', error)
+        updateNodeData(props.id, {
+          status: 'error',
+          error: error.message || 'Generation failed'
+        })
+      }
+    } finally {
+      abortControllerRef.current = null
     }
   }, [props.id, props.data.parameters, updateNodeData])
 
+  const handleCancel = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+  }, [])
+
   return (
-    <BaseNode {...props} onRun={handleRun} canRun={canRun()} />
+    <BaseNode {...props} onRun={handleRun} onCancel={handleCancel} canRun={canRun()} />
   )
 })
 
