@@ -224,16 +224,38 @@ export function WorkflowEditorPage() {
     setWorkflowTitle(e.target.value)
   }
 
-  const handleTitleBlur = () => {
-    setIsEditingTitle(false)
-    if (!workflowTitle.trim()) {
-      setWorkflowTitle('Untitled Workflow')
+  const saveTitleImmediately = async () => {
+    const finalTitle = workflowTitle.trim() || 'Untitled Workflow'
+    setWorkflowTitle(finalTitle)
+
+    // Save immediately if workflow exists
+    if (workflowId) {
+      setIsSaving(true)
+      try {
+        await WorkflowService.saveWorkflow({
+          id: workflowId,
+          title: finalTitle,
+          nodes,
+          edges,
+        })
+        setLastSaved(new Date())
+      } catch (error) {
+        console.error('Failed to save title:', error)
+      } finally {
+        setIsSaving(false)
+      }
     }
   }
 
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleTitleBlur = async () => {
+    setIsEditingTitle(false)
+    await saveTitleImmediately()
+  }
+
+  const handleTitleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      titleInputRef.current?.blur()
+      setIsEditingTitle(false)
+      await saveTitleImmediately()
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false)
     }
