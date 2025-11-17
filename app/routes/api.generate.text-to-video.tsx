@@ -12,7 +12,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const body = await request.json();
-    const { prompt, model = "minimax", duration = 5 } = body;
+    const { prompt, model = "minimax", duration = "5s", aspectRatio = "9:16" } = body;
 
     if (!prompt) {
       return Response.json({ error: "Prompt is required" }, { status: 400 });
@@ -21,15 +21,30 @@ export async function action({ request }: ActionFunctionArgs) {
     const modelMap: Record<string, string> = {
       minimax: "fal-ai/minimax-video",
       kling: "fal-ai/kling-video/v1/standard/text-to-video",
+      "veo-3": "fal-ai/veo3.1/fast",
     };
 
     const endpoint = modelMap[model] || "fal-ai/minimax-video";
 
-    const result = await fal.subscribe(endpoint, {
-      input: {
+    // Build input based on model
+    let input: any;
+    if (model === "veo-3") {
+      input = {
         prompt,
-        duration: duration,
-      },
+        duration,
+        aspect_ratio: aspectRatio,
+      };
+    } else {
+      // For other models, convert duration string to number
+      const durationNum = parseInt(duration);
+      input = {
+        prompt,
+        duration: durationNum,
+      };
+    }
+
+    const result = await fal.subscribe(endpoint, {
+      input,
       logs: true,
     });
 

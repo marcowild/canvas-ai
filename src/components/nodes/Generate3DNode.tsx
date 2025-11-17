@@ -73,22 +73,7 @@ export const Generate3DNode = memo((props: NodeProps<BaseNodeData>) => {
   }, [props.id, updateNodeData])
 
   return (
-    <BaseNode {...props} onRun={handleRun} canRun={canRun()}>
-      <div className="text-xs text-gray-400">
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">AI Model:</div>
-          <div>Rodin 2.0</div>
-        </div>
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">Output:</div>
-          <div>3D Model (GLB/OBJ)</div>
-        </div>
-        <div>
-          <div className="font-semibold text-gray-300">Credits:</div>
-          <div>15 credits per model</div>
-        </div>
-      </div>
-    </BaseNode>
+    <BaseNode {...props} onRun={handleRun} canRun={canRun()} />
   )
 })
 

@@ -16,11 +16,19 @@ interface WorkflowCanvasProps {
 }
 
 function WorkflowCanvasInner({ children }: WorkflowCanvasProps) {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useWorkflowStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeId } = useWorkflowStore()
 
   const onInit = useCallback(() => {
     console.log('React Flow initialized')
   }, [])
+
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
+    setSelectedNodeId(node.id)
+  }, [setSelectedNodeId])
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null)
+  }, [setSelectedNodeId])
 
   // Validate connections (type checking)
   const isValidConnection = useCallback(
@@ -84,9 +92,11 @@ function WorkflowCanvasInner({ children }: WorkflowCanvasProps) {
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onInit={onInit}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
         fitView
         attributionPosition="bottom-left"
-        deleteKeyCode="Delete"
+        deleteKeyCode={["Delete", "Backspace"]}
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         <Controls />

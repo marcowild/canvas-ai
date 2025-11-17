@@ -17,6 +17,7 @@ import { WorkflowNode, WorkflowEdge } from '../types/workflow'
 interface WorkflowState {
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
+  selectedNodeId: string | null
   onNodesChange: OnNodesChange
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
@@ -24,11 +25,13 @@ interface WorkflowState {
   setEdges: (edges: WorkflowEdge[]) => void
   addNode: (node: WorkflowNode) => void
   updateNodeData: (nodeId: string, data: Partial<WorkflowNode['data']>) => void
+  setSelectedNodeId: (nodeId: string | null) => void
 }
 
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: [],
   edges: [],
+  selectedNodeId: null,
   onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -61,5 +64,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     )
     console.log('updateNodeData called:', { nodeId, data, updatedNodes })
     set({ nodes: updatedNodes })
+  },
+  setSelectedNodeId: (nodeId: string | null) => {
+    set({ selectedNodeId: nodeId })
   },
 }))

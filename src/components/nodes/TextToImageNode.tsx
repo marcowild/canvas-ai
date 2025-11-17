@@ -67,6 +67,22 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
       const width = props.data.parameters.find((p) => p.id === 'width')?.value || 1024
       const height = props.data.parameters.find((p) => p.id === 'height')?.value || 1024
       const steps = props.data.parameters.find((p) => p.id === 'steps')?.value || 30
+      const aspectRatio = props.data.parameters.find((p) => p.id === 'aspectRatio')?.value || '1:1'
+
+      // Build request payload
+      const payload: any = {
+        prompt: inputData.prompt,
+        model,
+        width,
+        height,
+        steps,
+        aspectRatio,
+      }
+
+      // Add reference image if provided
+      if (inputData.referenceImage) {
+        payload.referenceImage = inputData.referenceImage
+      }
 
       // Call server-side API
       const response = await fetch('/api/generate/text-to-image', {
@@ -74,13 +90,7 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: inputData.prompt,
-          model,
-          width,
-          height,
-          steps,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -106,18 +116,7 @@ export const TextToImageNode = memo((props: NodeProps<BaseNodeData>) => {
   }, [props.id, props.data.parameters, storeNodes, storeEdges, updateNodeData])
 
   return (
-    <BaseNode {...props} onRun={handleRun} canRun={canRun()}>
-      <div className="text-xs text-gray-400">
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">AI Model:</div>
-          <div>Flux Pro / SDXL</div>
-        </div>
-        <div>
-          <div className="font-semibold text-gray-300">Credits:</div>
-          <div>5 credits per generation</div>
-        </div>
-      </div>
-    </BaseNode>
+    <BaseNode {...props} onRun={handleRun} canRun={canRun()} />
   )
 })
 

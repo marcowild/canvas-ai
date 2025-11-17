@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router'
 import { ReactFlowProvider, useReactFlow } from 'reactflow'
 import { WorkflowCanvas } from '../components/WorkflowCanvas'
 import { NodePalette } from '../components/NodePalette'
+import { PropertiesPanel } from '../components/PropertiesPanel'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { createNodeFromTemplate } from '../lib/nodeTypes'
 import { WorkflowExecutor } from '../lib/workflow-executor'
@@ -79,12 +80,7 @@ function WorkflowEditorInner({ onRunWorkflow, isExecuting, executionError }: Wor
         </main>
 
         {/* Properties Panel - Right Sidebar */}
-        <aside className="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-white text-sm font-semibold mb-3">Properties</h2>
-            <p className="text-gray-400 text-sm">Select a node to view its properties</p>
-          </div>
-        </aside>
+        <PropertiesPanel />
       </div>
     </div>
   )

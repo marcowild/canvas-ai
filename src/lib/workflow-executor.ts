@@ -218,29 +218,41 @@ export class WorkflowExecutor {
     const width = node.data.parameters.find((p) => p.id === 'width')?.value || 1024
     const height = node.data.parameters.find((p) => p.id === 'height')?.value || 1024
     const steps = node.data.parameters.find((p) => p.id === 'steps')?.value || 30
+    const aspectRatio = node.data.parameters.find((p) => p.id === 'aspectRatio')?.value || '1:1'
+    const referenceImage = inputs.referenceImage
 
-    // Import fal-ai dynamically to avoid issues if not configured
+    // Build request payload
+    const payload: any = {
+      prompt,
+      model,
+      width,
+      height,
+      steps,
+      aspectRatio,
+    }
+
+    // Add reference image if provided
+    if (referenceImage) {
+      payload.referenceImage = referenceImage
+    }
+
+    // Call server-side API route
     try {
-      const { fal } = await import('./fal-client')
-
-      // Map model to fal.ai endpoint
-      const modelEndpoint = this.getFalModelEndpoint(model)
-
-      // Call fal.ai
-      const result = await fal.subscribe(modelEndpoint, {
-        input: {
-          prompt,
-          image_size: {
-            width,
-            height,
-          },
-          num_inference_steps: steps,
+      const response = await fetch('/api/generate/text-to-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        logs: true,
+        body: JSON.stringify(payload),
       })
 
-      // Return the image URL
-      return result.images?.[0]?.url || result.image?.url || null
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Image generation failed')
+      }
+
+      const result = await response.json()
+      return result.imageUrl
     } catch (error: any) {
       throw new Error(`AI generation failed: ${error.message}`)
     }
@@ -288,50 +300,57 @@ export class WorkflowExecutor {
     }
 
     // Get parameters from node
-    const duration = node.data.parameters.find((p) => p.id === 'duration')?.value || '5'
+    const model = node.data.parameters.find((p) => p.id === 'model')?.value || 'minimax'
+    const duration = node.data.parameters.find((p) => p.id === 'duration')?.value || '5s'
+    const aspectRatio = node.data.parameters.find((p) => p.id === 'aspectRatio')?.value || '9:16'
 
+    // Call appropriate API endpoint based on inputs
     try {
-      const { fal } = await import('./fal-client')
+      if (imageUrl) {
+        // Image-to-video
+        const response = await fetch('/api/generate/image-to-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            prompt: prompt || '',
+            model,
+            duration,
+            aspectRatio,
+          }),
+        })
 
-      // Use different endpoints based on available inputs
-      if (imageUrl && prompt) {
-        // Image-to-video with prompt guidance
-        const result = await fal.subscribe('fal-ai/kling-video/v2/master/image-to-video', {
-          input: {
-            image_url: imageUrl,
-            prompt: prompt,
-            duration: duration.toString(),
-            aspect_ratio: '16:9',
-            negative_prompt: 'blur, distort, and low quality',
-          },
-          logs: true,
-        })
-        return result.video?.url || null
-      } else if (imageUrl) {
-        // Image-to-video without prompt
-        const result = await fal.subscribe('fal-ai/kling-video/v2/master/image-to-video', {
-          input: {
-            image_url: imageUrl,
-            prompt: 'Animate this image with smooth, natural motion',
-            duration: duration.toString(),
-            aspect_ratio: '16:9',
-            negative_prompt: 'blur, distort, and low quality',
-          },
-          logs: true,
-        })
-        return result.video?.url || null
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Video generation failed')
+        }
+
+        const result = await response.json()
+        return result.videoUrl
       } else {
-        // Text-to-video (prompt only)
-        const result = await fal.subscribe('fal-ai/kling-video/v2/master/text-to-video', {
-          input: {
-            prompt: prompt,
-            duration: duration.toString(),
-            aspect_ratio: '16:9',
-            negative_prompt: 'blur, distort, and low quality',
+        // Text-to-video
+        const response = await fetch('/api/generate/text-to-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          logs: true,
+          body: JSON.stringify({
+            prompt,
+            model,
+            duration,
+            aspectRatio,
+          }),
         })
-        return result.video?.url || null
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Video generation failed')
+        }
+
+        const result = await response.json()
+        return result.videoUrl
       }
     } catch (error: any) {
       throw new Error(`Video generation failed: ${error.message}`)
@@ -341,15 +360,6 @@ export class WorkflowExecutor {
   private executePreview(node: WorkflowNode, inputs: Record<string, any>): any {
     // Preview nodes just pass through the input data
     return inputs.data || null
-  }
-
-  private getFalModelEndpoint(model: string): string {
-    const modelMap: Record<string, string> = {
-      'flux-pro': 'fal-ai/flux-pro',
-      'sdxl': 'fal-ai/fast-sdxl',
-      'sd-3.5': 'fal-ai/stable-diffusion-v3-medium',
-    }
-    return modelMap[model] || 'fal-ai/flux-pro'
   }
 
   private updateNode(nodeId: string, data: Partial<WorkflowNode['data']>) {

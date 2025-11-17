@@ -73,6 +73,17 @@ export const BaseNode = memo(({ data, selected, children, onRun, canRun }: BaseN
       <div className="px-4 py-3">
         {children || (
           <div className="text-xs text-gray-400">
+            {/* Show model parameter prominently for AI nodes */}
+            {isAINode && data.parameters.find(p => p.id === 'model') && (
+              <div className="mb-2 pb-2 border-b border-gray-700">
+                <div className="font-semibold text-gray-300 text-xs mb-1">Model:</div>
+                <div className="text-white text-xs">
+                  {data.parameters.find(p => p.id === 'model')?.options?.find(
+                    opt => opt.value === data.parameters.find(p => p.id === 'model')?.value
+                  )?.label || data.parameters.find(p => p.id === 'model')?.value}
+                </div>
+              </div>
+            )}
             {data.inputs.length > 0 && (
               <div className="mb-2">
                 <div className="font-semibold text-gray-300 mb-1">Inputs:</div>
@@ -87,7 +98,7 @@ export const BaseNode = memo(({ data, selected, children, onRun, canRun }: BaseN
                 ))}
               </div>
             )}
-            {data.parameters.length > 0 && (
+            {data.parameters.length > 0 && !isAINode && (
               <div className="text-gray-400 text-xs">
                 {data.parameters.length} parameter(s)
               </div>

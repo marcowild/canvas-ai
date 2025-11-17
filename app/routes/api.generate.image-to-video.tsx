@@ -12,7 +12,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const body = await request.json();
-    const { imageUrl, prompt, model = "minimax", duration = 5 } = body;
+    const { imageUrl, prompt, model = "minimax", duration = "5s", aspectRatio = "auto" } = body;
 
     if (!imageUrl) {
       return Response.json({ error: "Image URL is required" }, { status: 400 });
@@ -21,16 +21,36 @@ export async function action({ request }: ActionFunctionArgs) {
     const modelMap: Record<string, string> = {
       minimax: "fal-ai/minimax-video/image-to-video",
       kling: "fal-ai/kling-video/v1/standard/image-to-video",
+      "veo-3": "fal-ai/veo3.1/fast/image-to-video",
     };
 
     const endpoint = modelMap[model] || "fal-ai/minimax-video/image-to-video";
 
-    const result = await fal.subscribe(endpoint, {
-      input: {
+    // Build input based on model
+    let input: any;
+    if (model === "veo-3") {
+      input = {
+        prompt: prompt || "",
+        image_url: imageUrl,
+        duration,
+      };
+
+      // Only add aspect_ratio if it's not "auto" (auto means use image's aspect ratio)
+      if (aspectRatio && aspectRatio !== "auto") {
+        input.aspect_ratio = aspectRatio;
+      }
+    } else {
+      // For other models, convert duration string to number
+      const durationNum = parseInt(duration);
+      input = {
         image_url: imageUrl,
         prompt: prompt || "",
-        duration: duration,
-      },
+        duration: durationNum,
+      };
+    }
+
+    const result = await fal.subscribe(endpoint, {
+      input,
       logs: true,
     });
 

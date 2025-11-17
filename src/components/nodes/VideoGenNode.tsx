@@ -54,7 +54,9 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
       })
 
       // Get parameters
-      const duration = props.data.parameters.find((p) => p.id === 'duration')?.value || '5'
+      const model = props.data.parameters.find((p) => p.id === 'model')?.value || 'minimax'
+      const duration = props.data.parameters.find((p) => p.id === 'duration')?.value || '5s'
+      const aspectRatio = props.data.parameters.find((p) => p.id === 'aspectRatio')?.value || '9:16'
 
       // Determine which API endpoint to use
       let response
@@ -68,7 +70,9 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
           body: JSON.stringify({
             imageUrl: inputData.image,
             prompt: inputData.prompt,
-            duration: duration.toString(),
+            model,
+            duration,
+            aspectRatio,
           }),
         })
       } else if (inputData.image) {
@@ -78,7 +82,9 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageUrl: inputData.image,
-            duration: duration.toString(),
+            model,
+            duration,
+            aspectRatio,
           }),
         })
       } else if (inputData.prompt) {
@@ -88,7 +94,9 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompt: inputData.prompt,
-            duration: duration.toString(),
+            model,
+            duration,
+            aspectRatio,
           }),
         })
       } else {
@@ -118,26 +126,7 @@ export const VideoGenNode = memo((props: NodeProps<BaseNodeData>) => {
   }, [props.id, props.data.parameters, updateNodeData])
 
   return (
-    <BaseNode {...props} onRun={handleRun} canRun={canRun()}>
-      <div className="text-xs text-gray-400">
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">AI Model:</div>
-          <div>Kling 2.0 Master</div>
-        </div>
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">Modes:</div>
-          <div>Image-to-Video / Text-to-Video</div>
-        </div>
-        <div className="mb-2">
-          <div className="font-semibold text-gray-300">Output:</div>
-          <div>Video (MP4)</div>
-        </div>
-        <div>
-          <div className="font-semibold text-gray-300">Credits:</div>
-          <div>~30 credits per video</div>
-        </div>
-      </div>
-    </BaseNode>
+    <BaseNode {...props} onRun={handleRun} canRun={canRun()} />
   )
 })
 
