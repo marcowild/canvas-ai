@@ -62,6 +62,7 @@ export const nodeTemplates: Record<string, Partial<BaseNodeData>> = {
           { label: 'SDXL', value: 'sdxl' },
           { label: 'Stable Diffusion 3.5', value: 'sd-3.5' },
           { label: 'Gemini 2.5 Flash (Imagen 3)', value: 'gemini-2.5-flash' },
+          { label: 'Nano Banana Pro', value: 'nano-banana-pro' },
         ],
       },
       {
@@ -227,10 +228,14 @@ export function createNodeFromTemplate(
     throw new Error(`Unknown node type: ${type}`)
   }
 
+  // Set default dimensions for text input nodes
+  const style = type === 'textInput' ? { width: 290, height: 180 } : undefined
+
   return {
     id: `${type}-${Date.now()}`,
     type,
     position,
+    style,
     data: {
       ...template,
     } as BaseNodeData,

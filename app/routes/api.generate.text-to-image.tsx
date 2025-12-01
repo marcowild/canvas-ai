@@ -23,6 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
       sdxl: "fal-ai/fast-sdxl",
       "sd-3.5": "fal-ai/stable-diffusion-v3-medium",
       "gemini-2.5-flash": referenceImage ? "fal-ai/gemini-25-flash-image/edit" : "fal-ai/gemini-25-flash-image",
+      "nano-banana-pro": referenceImage ? "fal-ai/nano-banana-pro/edit" : "fal-ai/nano-banana-pro",
     };
 
     const endpoint = modelMap[model] || "fal-ai/flux-pro";
@@ -30,8 +31,8 @@ export async function action({ request }: ActionFunctionArgs) {
     // Build input object - different models have different parameter formats
     let input: any;
 
-    if (model === "gemini-2.5-flash") {
-      // Gemini 2.5 Flash Image uses different parameters
+    if (model === "gemini-2.5-flash" || model === "nano-banana-pro") {
+      // Gemini and Nano Banana Pro use same API format
       if (referenceImage) {
         // Edit mode with reference image (uses image_urls as array)
         input = {

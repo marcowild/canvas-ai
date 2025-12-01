@@ -22,19 +22,34 @@ export const PropertiesPanel = memo(() => {
     // Handle text-to-image nodes
     if (node.type === 'textToImage') {
       const isGemini = modelParam?.value === 'gemini-2.5-flash'
+      const isNanoBanana = modelParam?.value === 'nano-banana-pro'
+      const isAspectRatioModel = isGemini || isNanoBanana
 
-      return nodeData.parameters.filter(param => {
-        // Always show model parameter
-        if (param.id === 'model') return true
+      return nodeData.parameters
+        .filter(param => {
+          // Always show model parameter
+          if (param.id === 'model') return true
 
-        // For Gemini, show aspect ratio but hide width/height/steps
-        if (isGemini) {
-          return param.id === 'aspectRatio'
-        }
+          // For Gemini and Nano Banana Pro, show aspect ratio but hide width/height/steps
+          if (isAspectRatioModel) {
+            return param.id === 'aspectRatio'
+          }
 
-        // For other models, hide aspect ratio but show width/height/steps
-        return param.id !== 'aspectRatio'
-      })
+          // For other models, hide aspect ratio but show width/height/steps
+          return param.id !== 'aspectRatio'
+        })
+        .map(param => {
+          // For Nano Banana Pro, filter out 'auto' from aspect ratio options
+          if (isNanoBanana && param.id === 'aspectRatio') {
+            return {
+              ...param,
+              options: param.options?.filter(opt => opt.value !== 'auto'),
+              // If current value is 'auto', change to '16:9'
+              value: param.value === 'auto' ? '16:9' : param.value,
+            }
+          }
+          return param
+        })
     }
 
     // Handle video-gen nodes
@@ -72,9 +87,19 @@ export const PropertiesPanel = memo(() => {
   }
 
   const handleParameterChange = (parameterId: string, value: any) => {
-    const updatedParameters = nodeData.parameters.map(param =>
+    let updatedParameters = nodeData.parameters.map(param =>
       param.id === parameterId ? { ...param, value } : param
     )
+
+    // When switching to Nano Banana Pro, change aspect ratio from 'auto' to '16:9'
+    if (parameterId === 'model' && value === 'nano-banana-pro') {
+      updatedParameters = updatedParameters.map(param =>
+        param.id === 'aspectRatio' && param.value === 'auto'
+          ? { ...param, value: '16:9' }
+          : param
+      )
+    }
+
     updateNodeData(selectedNodeId, { parameters: updatedParameters })
   }
 
