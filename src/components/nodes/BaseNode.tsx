@@ -32,7 +32,7 @@ export const BaseNode = memo(({ data, selected, children, onRun, onCancel, canRu
     <div
       className={`bg-gray-800 rounded-lg shadow-lg border-2 ${categoryColor} ${
         selected ? 'ring-2 ring-blue-400' : ''
-      } min-w-[200px] max-w-[300px]`}
+      } min-w-[200px] h-full flex flex-col`}
     >
       {/* Header */}
       <div className="px-4 py-2 border-b border-gray-700 flex items-center justify-between">
@@ -86,7 +86,7 @@ export const BaseNode = memo(({ data, selected, children, onRun, onCancel, canRu
       ))}
 
       {/* Content */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 flex-1 flex flex-col">
         {children || (
           <div className="text-xs text-gray-400">
             {/* Show model parameter prominently for AI nodes */}

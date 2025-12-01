@@ -17,7 +17,7 @@ interface WorkflowEditorInnerProps {
 
 function WorkflowEditorInner({ onRunWorkflow, isExecuting, executionError }: WorkflowEditorInnerProps) {
   const { project } = useReactFlow()
-  const { addNode } = useWorkflowStore()
+  const { addNode, nodes, selectedNodeId } = useWorkflowStore()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
 
   const onDragOver = useCallback((event: DragEvent) => {
@@ -46,12 +46,35 @@ function WorkflowEditorInner({ onRunWorkflow, isExecuting, executionError }: Wor
 
   const handleAddNode = useCallback(
     (type: string) => {
-      // Add node at center of viewport
-      const position = { x: 250, y: 250 }
+      let position = { x: 250, y: 250 }
+
+      // If a node is selected, place new node to the right of it
+      if (selectedNodeId) {
+        const selectedNode = nodes.find(n => n.id === selectedNodeId)
+        if (selectedNode) {
+          const nodeWidth = (selectedNode.style?.width as number) || 250
+          position = {
+            x: selectedNode.position.x + nodeWidth + 50,
+            y: selectedNode.position.y,
+          }
+        }
+      } else if (nodes.length > 0) {
+        // Find rightmost node and place new node to the right of it
+        const rightmostNode = nodes.reduce((rightmost, node) => {
+          const nodeRight = node.position.x + ((node.style?.width as number) || 250)
+          const rightmostRight = rightmost.position.x + ((rightmost.style?.width as number) || 250)
+          return nodeRight > rightmostRight ? node : rightmost
+        })
+        position = {
+          x: rightmostNode.position.x + ((rightmostNode.style?.width as number) || 250) + 50,
+          y: rightmostNode.position.y,
+        }
+      }
+
       const newNode = createNodeFromTemplate(type, position)
       addNode(newNode)
     },
-    [addNode]
+    [addNode, nodes, selectedNodeId]
   )
 
   return (
